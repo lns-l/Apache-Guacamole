@@ -69,6 +69,13 @@ services:
       PROXY_IP_HEADER: ${PROXY_IP_HEADER:-X-Forwarded-For}
       PROXY_PROTOCOL_HEADER: ${PROXY_PROTOCOL_HEADER:-X-Forwarded-Proto}
       
+      # Configuração TOTP (Autenticação Multifator)
+      TOTP_ENABLED: ${TOTP_ENABLED:-true}
+      TOTP_ISSUER: ${TOTP_ISSUER:-Apache Guacamole}
+      TOTP_DIGITS: ${TOTP_DIGITS:-6}
+      TOTP_PERIOD: ${TOTP_PERIOD:-30}
+      TOTP_MODE: ${TOTP_MODE:-sha1}
+      
     ports:
       - "${GUACAMOLE_PORT:-80}:8080"
     networks:

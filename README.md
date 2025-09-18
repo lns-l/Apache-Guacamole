@@ -53,7 +53,26 @@ Abra seu navegador e acesse:
 - **Usuário padrão**: guacadmin
 - **Senha padrão**: guacadmin
 
-⚠️ **IMPORTANTE**: Altere a senha padrão imediatamente após o primeiro login!
+⚠️ **IMPORTANTE**: 
+- Altere a senha padrão imediatamente após o primeiro login!
+- **TOTP está habilitado** - você precisará configurar um app autenticador na primeira vez
+
+### 4. Configurar Autenticação Multifator (TOTP)
+
+Na primeira vez que fizer login, você será solicitado a configurar TOTP:
+
+1. **Faça login** com usuário/senha padrão
+2. **Escaneie o QR Code** com seu app autenticador:
+   - Google Authenticator
+   - Microsoft Authenticator
+   - Authy
+   - FreeOTP
+3. **Digite o código** de 6 dígitos gerado pelo app
+4. **Confirme a configuração**
+
+📱 **Apps Recomendados**:
+- **Android/iOS**: Google Authenticator, Microsoft Authenticator
+- **Desktop**: Authy, WinAuth (Windows)
 
 ## 🏗️ Arquitetura
 
@@ -106,6 +125,13 @@ MAX_CONNECTIONS_PER_USER=5
 # LDAP_HOSTNAME=ldap.example.com
 # LDAP_PORT=389
 # LDAP_USER_BASE_DN=ou=users,dc=example,dc=com
+
+# Configurações TOTP (Autenticação Multifator)
+TOTP_ENABLED=true
+TOTP_ISSUER=Apache Guacamole
+TOTP_DIGITS=6
+TOTP_PERIOD=30
+TOTP_MODE=sha1
 ```
 
 **Todas as configurações estão centralizadas no arquivo `config.env`** para facilitar a manutenção e personalização.
@@ -135,6 +161,38 @@ LDAP_GROUP_BASE_DN=ou=groups,dc=empresa,dc=com
 LDAP_SEARCH_BIND_DN=cn=admin,dc=empresa,dc=com
 LDAP_SEARCH_BIND_PASSWORD=sua_senha_admin
 ```
+
+### Configurações de Autenticação Multifator (TOTP)
+
+O sistema inclui autenticação multifator TOTP habilitada por padrão. Configure no arquivo `config.env`:
+
+```bash
+# Habilitar/desabilitar TOTP
+TOTP_ENABLED=true
+
+# Nome da entidade (aparece no app autenticador)
+TOTP_ISSUER=Apache Guacamole
+
+# Número de dígitos (6, 7 ou 8)
+TOTP_DIGITS=6
+
+# Duração do código em segundos
+TOTP_PERIOD=30
+
+# Algoritmo de hash (sha1, sha256, sha512)
+TOTP_MODE=sha1
+
+# Bypass TOTP para IPs específicos (opcional)
+# TOTP_BYPASS_HOSTS=192.168.1.0/24,10.0.0.0/8
+
+# Forçar TOTP apenas para IPs específicos (opcional)
+# TOTP_ENFORCE_HOSTS=0.0.0.0/0
+```
+
+**Como Funciona**:
+1. **Primeiro fator**: Usuário/senha (autenticação normal)
+2. **Segundo fator**: Código TOTP de 6 dígitos (30 segundos de validade)
+3. **Apps compatíveis**: Google Authenticator, Microsoft Authenticator, Authy, FreeOTP
 
 ### Configurações de Proxy Reverso
 
@@ -230,7 +288,19 @@ docker-compose ps
 docker-compose logs -f guacamole
 ```
 
-**4. Problemas de inicialização do banco**
+**4. Problemas com TOTP**
+```bash
+# Verificar se TOTP está habilitado nos logs
+docker-compose logs guacamole | grep -i totp
+
+# Resetar TOTP de um usuário (via interface web)
+# 1. Acesse a interface de administração
+# 2. Vá em Settings > Users
+# 3. Edite o usuário
+# 4. Marque "Clear TOTP secret" e salve
+```
+
+**5. Problemas de inicialização do banco**
 ```bash
 # Se houver problemas com o schema, force uma reinicialização:
 docker-compose down
