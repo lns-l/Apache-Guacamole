@@ -49,7 +49,7 @@ docker-compose logs -f
 ### 3. Acessar o Guacamole
 
 Abra seu navegador e acesse:
-- **URL**: http://localhost:8080/guacamole/
+- **URL**: http://localhost/guacamole/
 - **Usuário padrão**: guacadmin
 - **Senha padrão**: guacadmin
 
