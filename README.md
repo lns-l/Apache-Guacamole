@@ -206,7 +206,24 @@ docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db < backup.
 
 ### Problemas Comuns
 
-**1. Container não inicia**
+**1. Erro "relation guacamole_user does not exist"**
+```bash
+# Este erro ocorre quando o schema não foi aplicado automaticamente
+# Execute o script de correção:
+
+# Windows PowerShell:
+.\fix-database.ps1
+
+# Linux/Mac:
+./fix-database.sh
+
+# Ou manualmente:
+docker-compose down
+docker volume rm apache-guacamole_postgres_data
+docker-compose up -d
+```
+
+**2. Container não inicia**
 ```bash
 # Verificar logs
 docker-compose logs guacamole
@@ -215,7 +232,7 @@ docker-compose logs guacamole
 netstat -tulpn | grep :8080
 ```
 
-**2. Erro de conexão com banco**
+**3. Erro de conexão com banco**
 ```bash
 # Verificar se o PostgreSQL está rodando
 docker-compose ps postgres
@@ -224,7 +241,7 @@ docker-compose ps postgres
 docker-compose logs postgres
 ```
 
-**3. Guacamole não carrega**
+**4. Guacamole não carrega**
 ```bash
 # Verificar se todos os serviços estão saudáveis
 docker-compose ps
