@@ -1,0 +1,34 @@
+# Arquivos de configuração sensíveis
+.env
+*.env
+config.env
+
+# Dados do banco de dados
+postgres_data/
+postgres-data/
+*.sql.backup
+
+# Logs
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de download
+guacamole-auth-jdbc-*.tar.gz
+guacamole-auth-jdbc-*/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
