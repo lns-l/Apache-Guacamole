@@ -3,10 +3,13 @@
 *.env
 config.env
 
-# Dados do banco de dados
+# Dados do banco de dados (volumes Docker)
 postgres_data/
 postgres-data/
 *.sql.backup
+
+# Backups de volumes Docker
+postgres-backup.tar.gz
 
 # Logs
 *.log

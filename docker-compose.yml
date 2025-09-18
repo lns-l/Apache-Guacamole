@@ -41,6 +41,7 @@ services:
       retries: ${HEALTH_CHECK_RETRIES:-3}
       start_period: ${HEALTH_CHECK_START_PERIOD:-30}s
 
+
   # Aplicação web Guacamole
   guacamole:
     image: guacamole/guacamole:1.6.0

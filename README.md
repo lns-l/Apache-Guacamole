@@ -1,6 +1,14 @@
 # Apache Guacamole Docker Compose
 
-Este projeto fornece uma configuração Docker Compose completa para o Apache Guacamole, seguindo as melhores práticas da documentação oficial.
+Este projeto fornece uma configuração Docker Compose completa e **automatizada** para o Apache Guacamole, seguindo as melhores práticas da documentação oficial.
+
+## ✨ Características
+
+- **🚀 Inicialização Automática**: Schema do banco aplicado automaticamente na primeira execução
+- **📦 Portabilidade Total**: Funciona em qualquer servidor sem configuração manual
+- **🔧 Configuração Centralizada**: Todas as variáveis em `config.env`
+- **💾 Volume Nomeado**: Dados do PostgreSQL gerenciados pelo Docker
+- **🛡️ Health Checks**: Monitoramento automático de todos os serviços
 
 ## 📋 Pré-requisitos
 
@@ -18,29 +26,17 @@ Este projeto fornece uma configuração Docker Compose completa para o Apache Gu
 git clone <seu-repositorio>
 cd Apache-Guacamole
 
-# Edite o arquivo de configuração centralizado
+# Copie o arquivo de exemplo e edite as configurações
+cp config.env.example config.env
 nano config.env
 
 # IMPORTANTE: Altere a senha do banco de dados e outras configurações sensíveis
 ```
 
-### 2. Inicialização do Banco de Dados
-
-O Guacamole requer que o banco de dados seja inicializado manualmente. Execute os seguintes comandos:
+### 2. Executar o Ambiente
 
 ```bash
-# Baixe os scripts SQL do Guacamole
-wget https://downloads.apache.org/guacamole/1.6.0/binary/guacamole-auth-jdbc-1.6.0.tar.gz
-tar -xzf guacamole-auth-jdbc-1.6.0.tar.gz
-
-# Copie os scripts SQL para o diretório init-db
-cp guacamole-auth-jdbc-1.6.0/postgresql/schema/*.sql init-db/
-```
-
-### 3. Executar o Ambiente
-
-```bash
-# Iniciar todos os serviços
+# Iniciar todos os serviços (funciona automaticamente!)
 docker-compose up -d
 
 # Verificar o status dos containers
@@ -50,7 +46,7 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-### 4. Acessar o Guacamole
+### 3. Acessar o Guacamole
 
 Abra seu navegador e acesse:
 - **URL**: http://localhost:8080/guacamole/
@@ -67,7 +63,7 @@ O ambiente é composto por três containers principais:
 - **Imagem**: postgres:15-alpine
 - **Função**: Banco de dados para autenticação e configurações
 - **Porta**: 5432 (interna)
-- **Armazenamento**: `./postgres-data/` (diretório local do projeto)
+- **Armazenamento**: Volume nomeado `postgres_data` (gerenciado pelo Docker)
 
 ### 2. Guacd (`guacd`)
 - **Imagem**: guacamole/guacd:1.6.0
@@ -95,8 +91,7 @@ POSTGRES_PASSWORD=sua_senha_segura
 
 # Configurações do Guacamole
 GUACAMOLE_PORT=8080
-WEBAPP_CONTEXT=ROOT
-
+WEBAPP_CONTEXT=guacamole
 
 # Configurações de proxy (opcional)
 REMOTE_IP_VALVE_ENABLED=false
@@ -115,16 +110,16 @@ MAX_CONNECTIONS_PER_USER=5
 
 **Todas as configurações estão centralizadas no arquivo `config.env`** para facilitar a manutenção e personalização.
 
-### Armazenamento Local
+### Armazenamento
 
-Os dados do banco de dados PostgreSQL são armazenados localmente no diretório `./postgres-data/` dentro do projeto:
+Os dados do banco de dados PostgreSQL são armazenados em um **volume nomeado** gerenciado pelo Docker:
 
 - **Vantagens**: 
-  - Dados ficam no projeto (fácil backup/restore)
-  - Não depende de volumes Docker
-  - Fácil migração entre ambientes
-- **Localização**: `C:\GIT\Apache-Guacamole\postgres-data\`
-- **Backup**: Copie o diretório `postgres-data` para fazer backup completo
+  - Dados persistem entre reinicializações
+  - Fácil backup/restore com comandos Docker
+  - Portabilidade entre diferentes locais de execução
+- **Volume**: `apache-guacamole_postgres_data`
+- **Backup**: Use `docker volume` commands para backup
 
 ### Configurações de Autenticação LDAP/Active Directory
 
@@ -177,9 +172,11 @@ docker-compose exec postgres pg_dump -U guacamole_user guacamole_db > backup.sql
 # Restaurar backup
 docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db < backup.sql
 
-# Backup dos dados locais (cópia do diretório)
-# Windows: xcopy postgres-data backup-postgres-data /E /I
-# Linux/Mac: cp -r postgres-data backup-postgres-data
+# Backup do volume Docker
+docker run --rm -v apache-guacamole_postgres_data:/data -v $(pwd):/backup alpine tar czf /backup/postgres-backup.tar.gz -C /data .
+
+# Restaurar volume Docker
+docker run --rm -v apache-guacamole_postgres_data:/data -v $(pwd):/backup alpine tar xzf /backup/postgres-backup.tar.gz -C /data
 ```
 
 ## 🔒 Segurança
@@ -187,7 +184,7 @@ docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db < backup.
 ### Configurações Recomendadas
 
 1. **Altere as senhas padrão**:
-   - Senha do banco de dados no arquivo `.env`
+   - Senha do banco de dados no arquivo `config.env`
    - Senha do usuário admin do Guacamole
 
 2. **Use HTTPS em produção**:
@@ -206,24 +203,7 @@ docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db < backup.
 
 ### Problemas Comuns
 
-**1. Erro "relation guacamole_user does not exist"**
-```bash
-# Este erro ocorre quando o schema não foi aplicado automaticamente
-# Execute o script de correção:
-
-# Windows PowerShell:
-.\fix-database.ps1
-
-# Linux/Mac:
-./fix-database.sh
-
-# Ou manualmente:
-docker-compose down
-docker volume rm apache-guacamole_postgres_data
-docker-compose up -d
-```
-
-**2. Container não inicia**
+**1. Container não inicia**
 ```bash
 # Verificar logs
 docker-compose logs guacamole
@@ -232,7 +212,7 @@ docker-compose logs guacamole
 netstat -tulpn | grep :8080
 ```
 
-**3. Erro de conexão com banco**
+**2. Erro de conexão com banco**
 ```bash
 # Verificar se o PostgreSQL está rodando
 docker-compose ps postgres
@@ -241,13 +221,21 @@ docker-compose ps postgres
 docker-compose logs postgres
 ```
 
-**4. Guacamole não carrega**
+**3. Guacamole não carrega**
 ```bash
 # Verificar se todos os serviços estão saudáveis
 docker-compose ps
 
 # Aguardar inicialização completa
 docker-compose logs -f guacamole
+```
+
+**4. Problemas de inicialização do banco**
+```bash
+# Se houver problemas com o schema, force uma reinicialização:
+docker-compose down
+docker volume rm apache-guacamole_postgres_data
+docker-compose up -d
 ```
 
 ### Health Checks
@@ -258,6 +246,29 @@ Todos os serviços possuem health checks configurados:
 # Verificar status de saúde
 docker-compose ps
 ```
+
+## 📁 Estrutura do Projeto
+
+```
+Apache-Guacamole/
+├── docker-compose.yml          # Configuração principal do Docker Compose
+├── config.env                  # Configurações centralizadas (criar a partir do exemplo)
+├── config.env.example          # Exemplo de configurações
+├── init-db/
+│   └── 01-guacamole-schema.sql # Schema do banco (gerado automaticamente)
+└── README.md                   # Este arquivo
+```
+
+## 🚀 Deploy em Novo Servidor
+
+Para deploy em um novo servidor:
+
+1. **Copie o projeto** para o servidor
+2. **Configure** o arquivo `config.env`
+3. **Execute** `docker-compose up -d`
+4. **Acesse** `http://SEU_IP:8080/guacamole/`
+
+**É isso! O sistema funciona automaticamente sem configuração manual adicional.**
 
 ## 📚 Recursos Adicionais
 
